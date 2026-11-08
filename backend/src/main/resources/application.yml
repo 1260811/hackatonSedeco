@@ -1,0 +1,31 @@
+spring:
+  config:
+    import: optional:file:../infraestructure/database/.env[.properties]
+  application:
+    name: tandas-api
+  datasource:
+    url: jdbc:postgresql://localhost:${POSTGRES_PORT:5432}/${POSTGRES_DB:tandas_demo}
+    username: ${POSTGRES_USER:tandas_app}
+    password: ${POSTGRES_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+server:
+  port: 8081
+
+pey:
+  base-url: ${PEY_API_BASE_URL:https://api.pey.mx}
+  api-key: ${PEY_API_KEY:}
+  webhook-secret: ${PEY_WEBHOOK_SECRET:}
+
+logging:
+  level:
+    org.flywaydb: INFO
