@@ -15,6 +15,7 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/users", "/api/webhooks/pey").permitAll()
                 .anyRequest().authenticated()
             )
