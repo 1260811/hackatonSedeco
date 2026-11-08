@@ -1,0 +1,4 @@
+# Agregar estas líneas al .gitignore del repositorio
+.env
+.env.*
+!.env.example
