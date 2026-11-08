@@ -1,0 +1,33 @@
+# Secrets and local environment
+.gh_token
+*.token
+.env
+.env.*
+!.env.example
+!.env.production
+
+# Claude Code — mantener CLAUDE.md pero excluir configuraciones locales
+.claude/
+.claude.json
+CLAUDE.local.md
+
+# Java / Maven / Gradle
+target/
+build/
+.gradle/
+*.class
+
+# Node
+node_modules/
+dist/
+coverage/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Archivos temporales usados durante el flujo
+.commit-msg
+tmp-*.json
