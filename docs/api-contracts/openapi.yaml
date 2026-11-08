@@ -1,0 +1,844 @@
+openapi: 3.1.0
+info:
+  title: Tandas API
+  version: 0.1.0
+  description: >
+    Contrato inicial de la API del sistema de gestión de tandas.
+    Los endpoints de integración con Pey no se exponen directamente:
+    el backend encapsula esa integración y verifica las transacciones.
+servers:
+  - url: https://api.example.com/api/v1
+    description: URL ilustrativa; sustituir por el dominio del ambiente.
+  - url: http://localhost:8080/api/v1
+    description: Desarrollo local
+tags:
+  - name: Accounts
+  - name: Tandas
+  - name: Participations
+  - name: Agreements
+  - name: Turns
+  - name: Payment obligations
+  - name: Payment requests
+  - name: Payments
+  - name: Notifications
+  - name: Pey webhooks
+security:
+  - bearerAuth: []
+paths:
+  /accounts:
+    get:
+      tags: [Accounts]
+      summary: Listar cuentas bancarias asociadas al usuario autenticado
+      operationId: listBankAccounts
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Cuentas del usuario.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BankAccount'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Accounts]
+      summary: Registrar una cuenta bancaria y solicitar su alta con Pey
+      operationId: registerBankAccount
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterBankAccountRequest'
+      responses:
+        '201':
+          description: Cuenta registrada; su activación en Pey puede quedar pendiente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankAccount'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /accounts/{accountId}:
+    parameters:
+      - $ref: '#/components/parameters/AccountId'
+    get:
+      tags: [Accounts]
+      summary: Consultar una cuenta bancaria propia
+      operationId: getBankAccount
+      responses:
+        '200':
+          description: Cuenta bancaria.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankAccount'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /tandas:
+    get:
+      tags: [Tandas]
+      summary: Listar tandas visibles para el usuario
+      operationId: listTandas
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/TandaStatus'
+      responses:
+        '200':
+          description: Tandas del usuario.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TandaSummary'
+    post:
+      tags: [Tandas]
+      summary: Crear una tanda en estado borrador
+      operationId: createTanda
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTandaRequest'
+      responses:
+        '201':
+          description: Tanda creada como borrador.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tanda'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+  /tandas/{tandaId}:
+    parameters:
+      - $ref: '#/components/parameters/TandaId'
+    get:
+      tags: [Tandas]
+      summary: Consultar el detalle de una tanda
+      operationId: getTanda
+      responses:
+        '200':
+          description: Detalle de tanda visible para el usuario.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tanda'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /tandas/{tandaId}/participations:
+    parameters:
+      - $ref: '#/components/parameters/TandaId'
+    get:
+      tags: [Participations]
+      summary: Listar participaciones de una tanda
+      operationId: listParticipations
+      responses:
+        '200':
+          description: Participaciones visibles según permisos.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Participation'
+    post:
+      tags: [Participations]
+      summary: Invitar o incorporar una participación a la tanda
+      operationId: addParticipation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddParticipationRequest'
+      responses:
+        '201':
+          description: Participación creada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Participation'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /tandas/{tandaId}/participations/{participationId}/bank-account:
+    parameters:
+      - $ref: '#/components/parameters/TandaId'
+      - $ref: '#/components/parameters/ParticipationId'
+    put:
+      tags: [Participations]
+      summary: Seleccionar la cuenta bancaria para esta participación
+      operationId: selectParticipationBankAccount
+      description: >
+        La cuenta elegida aplica a nuevas solicitudes. Las solicitudes de pago
+        ya emitidas conservan la cuenta destinataria original. El backend valida
+        que la cuenta esté asociada y habilitada para recibir pagos.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [bankAccountId]
+              properties:
+                bankAccountId:
+                  type: string
+      responses:
+        '200':
+          description: Cuenta seleccionada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Participation'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /tandas/{tandaId}/agreement:
+    parameters:
+      - $ref: '#/components/parameters/TandaId'
+    get:
+      tags: [Agreements]
+      summary: Consultar el convenio vigente de la tanda
+      operationId: getAgreement
+      responses:
+        '200':
+          description: Convenio y estado de aceptación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agreement'
+    put:
+      tags: [Agreements]
+      summary: Configurar el convenio mientras la tanda está en borrador
+      operationId: configureAgreement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgreementConfiguration'
+      responses:
+        '200':
+          description: Convenio configurado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agreement'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /tandas/{tandaId}/agreement/acceptance:
+    parameters:
+      - $ref: '#/components/parameters/TandaId'
+    post:
+      tags: [Agreements]
+      summary: Aceptar la versión vigente del convenio
+      operationId: acceptAgreement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [agreementVersion]
+              properties:
+                agreementVersion:
+                  type: integer
+                  minimum: 1
+      responses:
+        '200':
+          description: Aceptación registrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgreementAcceptance'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /tandas/{tandaId}/activation:
+    parameters:
+      - $ref: '#/components/parameters/TandaId'
+    post:
+      tags: [Tandas]
+      summary: Activar una tanda
+      operationId: activateTanda
+      description: >
+        Solo se activa si existen al menos tres personas distintas,
+        las participaciones requeridas tienen cuenta seleccionada y todos
+        aceptaron la versión vigente del convenio. La asignación definitiva
+        de turnos debe estar confirmada por la organización.
+      responses:
+        '200':
+          description: Tanda activada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tanda'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /tandas/{tandaId}/turns:
+    parameters:
+      - $ref: '#/components/parameters/TandaId'
+    get:
+      tags: [Turns]
+      summary: Consultar turnos de una tanda
+      operationId: listTurns
+      responses:
+        '200':
+          description: Turnos de la tanda.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Turn'
+  /tandas/{tandaId}/obligations:
+    parameters:
+      - $ref: '#/components/parameters/TandaId'
+    get:
+      tags: [Payment obligations]
+      summary: Consultar obligaciones de pago visibles para el usuario
+      operationId: listPaymentObligations
+      responses:
+        '200':
+          description: Obligaciones según permisos del usuario.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PaymentObligation'
+  /obligations/{obligationId}/payment-requests:
+    parameters:
+      - $ref: '#/components/parameters/ObligationId'
+    post:
+      tags: [Payment requests]
+      summary: Crear una solicitud de pago QR o Push por el importe exacto
+      operationId: createPaymentRequest
+      description: >
+        No se permiten pagos parciales. La solicitud conserva una instantánea
+        de la cuenta destinataria y el importe de la obligación. El backend
+        valida que la obligación pueda cobrarse y que la cuenta esté ACTIVE
+        en Pey cuando aplique.
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Clave única para evitar solicitudes duplicadas por reintento del cliente.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePaymentRequest'
+      responses:
+        '201':
+          description: Solicitud creada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentRequest'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /payment-requests/{paymentRequestId}:
+    parameters:
+      - $ref: '#/components/parameters/PaymentRequestId'
+    get:
+      tags: [Payment requests]
+      summary: Consultar una solicitud de pago
+      operationId: getPaymentRequest
+      responses:
+        '200':
+          description: Solicitud y estado actual.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /tandas/{tandaId}/payments:
+    parameters:
+      - $ref: '#/components/parameters/TandaId'
+    get:
+      tags: [Payments]
+      summary: Consultar pagos y movimientos visibles de la tanda
+      operationId: listPayments
+      description: La organización puede consultar todos los movimientos de su tanda; cada participante solo los que sus permisos permiten.
+      responses:
+        '200':
+          description: Pagos confirmados y movimientos visibles.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Payment'
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: Listar notificaciones del usuario autenticado
+      operationId: listNotifications
+      responses:
+        '200':
+          description: Notificaciones.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Notification'
+  /webhooks/pey:
+    post:
+      tags: [Pey webhooks]
+      summary: Recibir notificaciones de Pey
+      operationId: receivePeyWebhook
+      security: []
+      description: >
+        Endpoint servidor-a-servidor. Debe validar la firma Standard Webhooks
+        sobre el cuerpo original, verificar antigüedad del timestamp y aplicar
+        idempotencia por webhook-id. El evento solo dispara la verificación
+        de la transacción con Pey; no confirma por sí mismo una obligación.
+      parameters:
+        - name: webhook-id
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: webhook-timestamp
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: webhook-signature
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              required: [type]
+              properties:
+                type:
+                  type: string
+                  description: Tipo de evento enviado por Pey.
+                transactionId:
+                  type: string
+                paymentLinkId:
+                  type: string
+      responses:
+        '202':
+          description: Evento válido aceptado para procesamiento.
+        '400':
+          description: Cuerpo o encabezados inválidos.
+        '401':
+          description: Firma inválida.
+        '500':
+          description: Error temporal al aceptar o procesar el evento.
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Esquema previsto; mecanismo de emisión/renovación pendiente de decisión.
+  parameters:
+    AccountId:
+      name: accountId
+      in: path
+      required: true
+      schema:
+        type: string
+    TandaId:
+      name: tandaId
+      in: path
+      required: true
+      schema:
+        type: string
+    ParticipationId:
+      name: participationId
+      in: path
+      required: true
+      schema:
+        type: string
+    ObligationId:
+      name: obligationId
+      in: path
+      required: true
+      schema:
+        type: string
+    PaymentRequestId:
+      name: paymentRequestId
+      in: path
+      required: true
+      schema:
+        type: string
+  responses:
+    ValidationError:
+      description: Datos inválidos.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    Unauthorized:
+      description: Autenticación requerida o inválida.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    NotFound:
+      description: Recurso no encontrado o no visible.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    Conflict:
+      description: Conflicto de estado, concurrencia o regla de negocio.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+  schemas:
+    Money:
+      type: string
+      pattern: '^[0-9]+(\\.[0-9]{1,2})?$'
+      examples: ['1000.00']
+      description: Importe decimal en MXN. No usar números binarios de punto flotante.
+    BankAccountStatus:
+      type: string
+      enum: [PENDING, ACTIVE, INACTIVE, REJECTED]
+    BankAccount:
+      type: object
+      required: [id, bankName, maskedAccount, peyStatus]
+      properties:
+        id:
+          type: string
+        bankName:
+          type: string
+        maskedAccount:
+          type: string
+          description: CLABE/cuenta enmascarada; nunca exponer datos completos innecesariamente.
+        peyBankAccountId:
+          type: string
+        peyStatus:
+          $ref: '#/components/schemas/BankAccountStatus'
+        isDeclaredOwner:
+          type: boolean
+        displayAlias:
+          type: string
+          nullable: true
+    RegisterBankAccountRequest:
+      type: object
+      required: [clabe, isDeclaredOwner]
+      properties:
+        clabe:
+          type: string
+          minLength: 18
+          maxLength: 18
+          pattern: '^[0-9]{18}$'
+        isDeclaredOwner:
+          type: boolean
+        displayAlias:
+          type: string
+          maxLength: 80
+          nullable: true
+        declaredOwnerName:
+          type: string
+          description: Requerido cuando isDeclaredOwner es true; debe coincidir con la titularidad reportada por Pey.
+    TandaStatus:
+      type: string
+      enum: [DRAFT, ACTIVE, PAUSED, CANCELLATION_PENDING, CANCELLED, COMPLETED]
+    TandaSummary:
+      type: object
+      required: [id, name, status]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          $ref: '#/components/schemas/TandaStatus'
+    Tanda:
+      allOf:
+        - $ref: '#/components/schemas/TandaSummary'
+        - type: object
+          properties:
+            contributionAmount:
+              $ref: '#/components/schemas/Money'
+            frequency:
+              type: string
+              enum: [WEEKLY, BIWEEKLY, MONTHLY, CUSTOM]
+            startDate:
+              type: string
+              format: date
+            participantCount:
+              type: integer
+              minimum: 0
+            distinctPersonCount:
+              type: integer
+              minimum: 0
+    CreateTandaRequest:
+      type: object
+      required: [name, contributionAmount, frequency, startDate]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        contributionAmount:
+          $ref: '#/components/schemas/Money'
+        frequency:
+          type: string
+          enum: [WEEKLY, BIWEEKLY, MONTHLY, CUSTOM]
+        startDate:
+          type: string
+          format: date
+        customPeriodDays:
+          type: integer
+          minimum: 1
+          description: Requerido cuando frequency es CUSTOM.
+    Participation:
+      type: object
+      required: [id, userId, status]
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        displayName:
+          type: string
+        status:
+          type: string
+          enum: [INVITED, ACTIVE, LEFT, REMOVED]
+        selectedBankAccountId:
+          type: string
+          nullable: true
+        selectedPosition:
+          type: integer
+          minimum: 1
+          nullable: true
+    AddParticipationRequest:
+      type: object
+      required: [userId]
+      properties:
+        userId:
+          type: string
+        selectedPosition:
+          type: integer
+          minimum: 1
+          nullable: true
+    AgreementConfiguration:
+      type: object
+      required: [penaltyEnabled]
+      properties:
+        penaltyEnabled:
+          type: boolean
+        penaltyType:
+          type: string
+          enum: [FIXED, PERCENTAGE]
+        penaltyValue:
+          $ref: '#/components/schemas/Money'
+        gracePeriodDays:
+          type: integer
+          minimum: 0
+        penaltyPeriodDays:
+          type: integer
+          minimum: 1
+        terms:
+          type: string
+          maxLength: 10000
+    Agreement:
+      type: object
+      required: [version, penaltyEnabled, acceptances]
+      properties:
+        version:
+          type: integer
+          minimum: 1
+        penaltyEnabled:
+          type: boolean
+        penaltyType:
+          type: string
+          enum: [FIXED, PERCENTAGE]
+        penaltyValue:
+          $ref: '#/components/schemas/Money'
+        gracePeriodDays:
+          type: integer
+        penaltyPeriodDays:
+          type: integer
+        acceptances:
+          type: array
+          items:
+            $ref: '#/components/schemas/AgreementAcceptance'
+    AgreementAcceptance:
+      type: object
+      required: [participationId, agreementVersion, acceptedAt]
+      properties:
+        participationId:
+          type: string
+        agreementVersion:
+          type: integer
+        acceptedAt:
+          type: string
+          format: date-time
+    Turn:
+      type: object
+      required: [id, position, receiverParticipationId, scheduledAt]
+      properties:
+        id:
+          type: string
+        position:
+          type: integer
+          minimum: 1
+        receiverParticipationId:
+          type: string
+        receiverBankAccountId:
+          type: string
+        scheduledAt:
+          type: string
+          format: date-time
+    PaymentObligation:
+      type: object
+      required: [id, participationId, amount, dueAt, status]
+      properties:
+        id:
+          type: string
+        participationId:
+          type: string
+        amount:
+          $ref: '#/components/schemas/Money'
+        dueAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [PENDING, PAYMENT_REQUESTED, PAID, OVERDUE, UNDER_REVIEW, CANCELLED]
+        penaltyAmount:
+          $ref: '#/components/schemas/Money'
+    CreatePaymentRequest:
+      type: object
+      required: [channel]
+      properties:
+        channel:
+          type: string
+          enum: [CODI_QR, CODI_PUSH]
+        phoneNumber:
+          type: string
+          description: Requerido para CODI_PUSH.
+          nullable: true
+    PaymentRequest:
+      type: object
+      required: [id, obligationId, channel, amount, status, createdAt]
+      properties:
+        id:
+          type: string
+        obligationId:
+          type: string
+        channel:
+          type: string
+          enum: [CODI_QR, CODI_PUSH]
+        amount:
+          $ref: '#/components/schemas/Money'
+        recipientBankAccountId:
+          type: string
+        status:
+          type: string
+          enum: [CREATED, PENDING, PROCESSING, EXPIRED, PAID, FAILED, UNDER_REVIEW]
+        qrPayload:
+          type: string
+          nullable: true
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+    Payment:
+      type: object
+      required: [id, obligationId, amount, paidAt, status]
+      properties:
+        id:
+          type: string
+        obligationId:
+          type: string
+        amount:
+          $ref: '#/components/schemas/Money'
+        paidAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [CONFIRMED, LATE, UNDER_REVIEW]
+        peyTransactionId:
+          type: string
+    Notification:
+      type: object
+      required: [id, type, message, createdAt, read]
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        message:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        read:
+          type: boolean
+    ApiError:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
