@@ -1,0 +1,569 @@
+﻿[
+    {
+        "number":  27,
+        "title":  "[DB-04] Catálogos, integridad avanzada y pruebas del modelo de datos",
+        "state":  "open",
+        "assignees":  {
+
+                      },
+        "labels":  {
+
+                   },
+        "body":  "## Identificación\n- **Backlog:** DB-04\n- **Prioridad:** P1\n- **Área de trabajo:** `/database`\n\n## Objetivo\nValidar que las restricciones de datos y los flujos financieros críticos se mantengan consistentes ante concurrencia, reintentos y cambios del ciclo de vida.\n\n## Alcance\n- Definir catálogos de estados y tipos compartidos.\n- Implementar y probar reglas de integridad que no puedan expresarse con constraints simples.\n- Probar reserva concurrente de turnos y expiración de reservas.\n- Probar límite de cinco usuarios por cuenta ante operaciones simultáneas.\n- Probar idempotencia de webhook-id y transactionId.\n- Probar consolidación de obligaciones por usuario/periodo/destino y exclusión de turnos propios.\n- Probar pagos externos parciales con confirmación/rechazo y acumulación de saldo.\n- Probar reasignación: obligaciones futuras cambian de responsable; las anteriores no.\n- Probar pausa, reanudación, cancelación unánime y liquidación.\n- Verificar que las operaciones financieras y de auditoría no se pierdan ni dupliquen.\n\n## Criterios de aceptación\n- [ ] Hay pruebas de integridad para cada regla crítica.\n- [ ] Los casos concurrentes no generan asignaciones ni cobros duplicados.\n- [ ] Los cambios de responsable no alteran el historial financiero previo.\n- [ ] Los pagos externos no se consideran confirmados antes de la aceptación del destinatario.\n- [ ] Las solicitudes CoDi no se interpretan como dinero recibido.\n- [ ] La cancelación no finaliza con solicitudes/transacciones pendientes.\n- [ ] Los resultados de pruebas quedan documentados.\n\n## Dependencias\nDB-01, DB-02 y DB-03.",
+        "comments":  {
+
+                     }
+    },
+    {
+        "number":  26,
+        "title":  "[DB-03] Crear migraciones iniciales de PostgreSQL",
+        "state":  "open",
+        "assignees":  {
+
+                      },
+        "labels":  {
+
+                   },
+        "body":  "## Identificación\n- **Backlog:** DB-03\n- **Prioridad:** P0\n- **Área de trabajo:** `/database`\n\n## Objetivo\nImplementar el esquema físico aprobado mediante migraciones versionadas, reproducibles y compatibles con los ambientes del proyecto.\n\n## Alcance\n- Seleccionar y configurar la herramienta de migraciones para Spring Boot (preferentemente Flyway).\n- Crear migraciones ordenadas para tablas, claves, restricciones e índices.\n- Crear catálogos/valores iniciales estrictamente necesarios.\n- Configurar ejecución de migraciones en ambiente local y CI.\n- Documentar aplicación, validación y estrategia de rollback/forward-fix.\n- Mantener scripts idempotentes cuando aplique; las migraciones versionadas no deben editarse después de desplegarse.\n\n## Criterios de aceptación\n- [ ] Una base vacía puede construirse ejecutando todas las migraciones en orden.\n- [ ] Las migraciones funcionan en PostgreSQL local y en el motor objetivo de GCP.\n- [ ] Flyway valida historial y checksum.\n- [ ] La estructura se puede levantar desde un entorno limpio de CI.\n- [ ] Se documenta cómo aplicar y verificar migraciones.\n- [ ] No se incluyen credenciales ni datos personales reales en scripts.\n- [ ] Se prueban restricciones críticas con casos válidos e inválidos.\n\n## Dependencias\nDB-02 aprobado.",
+        "comments":  {
+
+                     }
+    },
+    {
+        "number":  25,
+        "title":  "[DB-02] Diseño físico PostgreSQL y restricciones de integridad",
+        "state":  "open",
+        "assignees":  {
+
+                      },
+        "labels":  {
+
+                   },
+        "body":  "## Identificación\n- **Backlog:** DB-02\n- **Prioridad:** P0\n- **Área de trabajo:** `/database`\n\n## Objetivo\nTransformar el modelo lógico aprobado en un esquema físico PostgreSQL implementable y consistente.\n\n## Alcance\n- Definir tablas, columnas, tipos, PK, FK, UNIQUE, CHECK y NOT NULL.\n- Definir índices para consultas frecuentes y claves de idempotencia.\n- Definir precisión monetaria con tipos DECIMAL/NUMERIC, nunca FLOAT.\n- Definir estrategia de timestamps y zona horaria.\n- Definir restricciones para estados válidos y transiciones controladas.\n- Definir integridad para máximo cinco usuarios por cuenta y evitar carreras concurrentes.\n- Definir unicidad de obligación consolidada por usuario, periodo y destino.\n- Definir unicidad de webhook-id y transactionId en sus ámbitos correspondientes.\n- Definir estrategia de borrado lógico/restricciones para conservar historial financiero y auditoría.\n- Documentar índices y justificación.\n\n## Criterios de aceptación\n- [ ] Cada relación del modelo lógico tiene FK y cardinalidad materializada.\n- [ ] Los importes monetarios usan NUMERIC con escala definida.\n- [ ] Se impide duplicar obligaciones consolidadas, entregas webhook y transacciones Pey.\n- [ ] La restricción de máximo cinco usuarios asociados a una cuenta es segura ante concurrencia.\n- [ ] No se permite eliminar físicamente información necesaria para trazabilidad financiera.\n- [ ] Se documentan índices, restricciones y decisiones de tipos.\n- [ ] El esquema es validado contra PostgreSQL objetivo.\n\n## Dependencias\nDB-01 aprobado.",
+        "comments":  {
+
+                     }
+    },
+    {
+        "number":  24,
+        "title":  "[DB-01] Diseño del modelo lógico de datos",
+        "state":  "open",
+        "assignees":  {
+
+                      },
+        "labels":  {
+
+                   },
+        "body":  "## Identificación\n- **Backlog:** DB-01\n- **Prioridad:** P0\n- **Área de trabajo:** `/database`\n\n## Objetivo\nDiseñar el modelo lógico relacional de la plataforma de tandas, alineado con las reglas de negocio confirmadas y los contratos compartidos entre frontend y backend.\n\n## Alcance\n- Identificar entidades, responsabilidades y relaciones.\n- Definir cardinalidades y restricciones conceptuales.\n- Modelar usuarios, cuentas bancarias y asociaciones.\n- Modelar tandas, participaciones múltiples por usuario, convenios y aceptaciones.\n- Modelar turnos, calendario, reservas temporales, asignaciones y reasignaciones.\n- Modelar obligaciones consolidadas por usuario/periodo/destino y su desglose por participación.\n- Modelar solicitudes CoDi, intentos, transacciones Pey, pagos conciliados y pagos externos.\n- Modelar incidencias, abandono, pausa/reanudación, cancelación, liquidación y devoluciones.\n- Modelar notificaciones y auditoría.\n- Documentar estados y transiciones sin confundir estados de negocio con estados del proveedor.\n\n## Reglas obligatorias que debe representar\n- Un usuario puede tener varias participaciones en una misma tanda.\n- Una cuenta bancaria puede asociarse con hasta cinco usuarios; la asociación usuario-cuenta tiene estado propio y no se elimina físicamente.\n- Cada participación selecciona una cuenta bancaria.\n- No se cobra a una persona por los turnos cuyo receptor es ella misma.\n- Las obligaciones se consolidan por usuario y periodo, separando destinos bancarios distintos; el desglose conserva participaciones.\n- Cada pagador recibe su solicitud individual; QR/Push CoDi no admite pagos parciales.\n- Pey gestiona los cobros. La plataforma no recibe, custodia ni distribuye fondos.\n- Pagos externos pueden ser parciales, pero cada registro requiere confirmación de la persona receptora; solo importes confirmados se aplican al saldo.\n- Abandono unilateral solo hasta 50 % recibido inclusive. Reasignación requiere aceptación del nuevo participante y aprobación del organizador; solo obligaciones futuras pasan al nuevo responsable.\n- Pausa/reanudación por el organizador, con notificación y conservación del calendario original.\n- Cancelación activa por unanimidad; bloquear nuevos cobros, resolver solicitudes/transacciones pendientes y calcular liquidación. Devoluciones externas requieren confirmación del destinatario.\n- Mantener historial y auditoría; no borrar movimientos financieros.\n\n## Entregables\n- Diagrama entidad-relación lógico.\n- Diccionario de entidades y relaciones.\n- Catálogo de reglas de integridad.\n- Matriz de estados y transiciones.\n- Registro de decisiones y pendientes.\n\n## Criterios de aceptación\n- [ ] Todas las reglas obligatorias tienen representación explícita.\n- [ ] No existen relaciones ambiguas para obligaciones, receptores, cuentas destino o reasignaciones.\n- [ ] Se distingue dinero recibido de obligaciones, solicitudes y transacciones notificadas.\n- [ ] El modelo permite reconstruir el historial después de reasignaciones, pausas y cancelaciones.\n- [ ] El modelo es revisado antes de diseñar el esquema físico.\n\n## Dependencias\nBE-04 a BE-12 y DOC-03. Este issue debe completarse antes de DB-02.",
+        "comments":  {
+
+                     }
+    },
+    {
+        "number":  23,
+        "title":  "DOC-03 Definir contratos API compartidos entre frontend y backend",
+        "state":  "open",
+        "assignees":  {
+
+                      },
+        "labels":  "documentation",
+        "body":  "## Objetivo\nDefinir y documentar los contratos HTTP entre `frontend/tandas-web` y `backend/tandas-api`, utilizando OpenAPI como fuente única de verdad.\n\n## Ubicación propuesta\n- `docs/api-contracts/README.md`: guía, convenciones, flujos y decisiones.\n- `docs/api-contracts/openapi.yaml`: especificación OpenAPI versionada.\n\n## Alcance inicial\nDocumentar contratos para:\n1. Autenticación y perfil de usuario.\n2. Cuentas bancarias y asociaciones usuario-cuenta.\n3. Tandas y participaciones (un usuario puede tener varias participaciones en una misma tanda).\n4. Selección de cuenta por participación y selección de posición/turno.\n5. Convenios y aceptaciones.\n6. Turnos y obligaciones.\n7. Solicitudes de cobro QR/Push y consulta de su estado.\n8. Historial de pagos y movimientos.\n9. Notificaciones dentro del sistema.\n10. Recepción de webhooks Pey y operaciones administrativas de conciliación.\n\n## Reglas de negocio que deben reflejar los contratos\n- Una tanda requiere al menos tres personas distintas para activarse.\n- Una persona puede tener más de una participación en una tanda.\n- Cada participación selecciona una cuenta bancaria para esa tanda.\n- La selección de posición se procesa automáticamente; los espacios no ocupados se compactan según la regla acordada.\n- El organizador puede participar, pero no se incorpora automáticamente.\n- No se permiten pagos parciales.\n- QR y Push deben solicitar el importe exacto de la obligación; Push requiere teléfono.\n- Los pagos se confirman mediante consulta/validación de la transacción Pey; el webhook es una notificación, no prueba definitiva.\n- Se distinguen obligación, solicitud/intento de pago, transacción Pey y pago confirmado.\n- Las solicitudes de cobro conservan la cuenta bancaria a la que fueron dirigidas.\n- Las sanciones pueden ser fijas o porcentuales; el porcentaje se calcula sobre el monto de la aportación. El organizador define periodo de gracia y periodicidad de sanción.\n- Las decisiones pendientes deben marcarse explícitamente como pendientes y no convertirse en comportamiento asumido.\n\n## Entregables\n- Catálogo de endpoints, métodos, parámetros, esquemas de request/response y errores.\n- Esquemas compartidos de paginación, validación y errores.\n- Estados y transiciones relevantes.\n- Ejemplos de solicitudes y respuestas.\n- Referencias desde los issues FE y BE correspondientes.\n\n## Criterios de aceptación\n- La especificación OpenAPI es válida y versionada.\n- Los contratos no duplican ni contradicen reglas de negocio confirmadas.\n- Frontend y backend pueden implementar usando los mismos nombres y estructuras.\n- Los puntos todavía no definidos quedan identificados como pendientes.\n- Los issues FE/BE relevantes enlazan este documento.\n\n## Reglas adicionales confirmadas (actualización 2026-11-08)\n- Pey gestiona los cobros CoDi; la plataforma no recibe ni custodia fondos, solo solicita QR/Push, notifica y concilia.\n- Cada pagador recibe una solicitud individual. Se consolidan aportaciones de varias participaciones del mismo usuario solo si son del mismo periodo y destino bancario.\n- No se cobra a una persona por los turnos cuyo receptor es ella misma; el desglose conserva las participaciones cubiertas.\n- Pagos externos parciales registrados por el organizador requieren confirmación de la persona receptora; las devoluciones externas requieren confirmación del destinatario.\n- Abandono unilateral permitido hasta el 50 % recibido (inclusive). Reasignación requiere aceptación de la persona propuesta y aprobación del organizador; obligaciones futuras pasan a la nueva persona y las anteriores permanecen con la original.\n- El organizador puede pausar/reanudar sin unanimidad y notifica a todos; reanudar implica nuevas fechas para turnos pendientes conservando fechas originales.\n- Cancelación activa requiere unanimidad, bloquea nuevos cobros, espera resolución de solicitudes/transacciones pendientes y genera cálculo de liquidación.\n- Reflejar estos flujos y estados en los contratos OpenAPI, distinguiendo transacciones Pey, pagos externos, confirmaciones, discrepancias, reasignaciones, pausas, cancelación y liquidación.\n",
+        "comments":  {
+
+                     }
+    },
+    {
+        "number":  22,
+        "title":  "[BE-12] Auditoría de operaciones y cambios relevantes",
+        "state":  "open",
+        "assignees":  {
+
+                      },
+        "labels":  {
+
+                   },
+        "body":  "## Identificación\n- **Backlog:** BE-12\n- **Prioridad:** P1 en el backlog original; revisar prioridad de auditoría financiera mínima\n- **Área de trabajo:** `/backend`\n\n## Objetivo\nRegistrar operaciones relevantes para trazabilidad, soporte y revisión de movimientos del sistema.\n\n## Alcance\n- Registrar cambios de configuración de tandas.\n- Registrar cambios de cuenta seleccionada y asociaciones de cuentas.\n- Registrar creación y versionado de convenios y sus aceptaciones.\n- Registrar operaciones financieras, conciliaciones y cambios de estado.\n- Registrar acciones administrativas sensibles.\n- Definir acceso de consulta y protección contra alteraciones no autorizadas.\n\n## Criterios de aceptación\n- [ ] Los eventos de auditoría identifican actor, acción, recurso y fecha.\n- [ ] Se conserva el contexto necesario para reconstruir cambios relevantes.\n- [ ] Las operaciones financieras y aceptaciones quedan trazables.\n- [ ] Los registros no exponen secretos ni datos bancarios sensibles innecesarios.\n- [ ] Los usuarios no pueden modificar o eliminar registros de auditoría mediante operaciones normales.\n- [ ] El acceso a auditoría está restringido y documentado.\n\n## Dependencias\nBE-01, BE-02 y DB-01 a DB-04.\n\n## Nota de prioridad\nAunque BE-12 conserva la prioridad P1 del backlog original, la auditoría mínima de operaciones financieras, aceptación de convenios y procesamiento de webhooks debe considerarse requisito de seguridad del MVP y coordinarse con BE-09 y BE-10.\n\n## Reglas funcionales confirmadas (actualización 2026-11-08)\n- Auditar pausa/reanudación, fechas originales/nuevas, abandono y porcentaje recibido al solicitarlo.\n- Auditar reasignación: solicitud del organizador, aceptación de la persona propuesta, aprobación y traslado solo de obligaciones futuras.\n- Auditar pagos externos parciales, registro, importe/fecha/medio/referencia, confirmación o rechazo y actor que realizó cada acción.\n- Auditar inicio y votaciones de cancelación, bloqueo de nuevos cobros, resolución de solicitudes Pey, cálculo de liquidación y registro/confirmación/rechazo de devoluciones.\n- Registrar actor, acción, recurso, fecha, estado y contexto necesario; no almacenar secretos ni datos bancarios sensibles innecesarios.\n- La auditoría de movimientos financieros y cambios de estado es requisito del MVP.\n",
+        "comments":  {
+                         "author":  "1260811",
+                         "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                         "created_at":  "2026-11-08T07:40:30Z"
+                     }
+    },
+    {
+        "number":  21,
+        "title":  "[BE-11] Servicio de notificaciones e historial",
+        "state":  "open",
+        "assignees":  {
+
+                      },
+        "labels":  {
+
+                   },
+        "body":  "## Identificación\n- **Backlog:** BE-11\n- **Prioridad:** P1\n- **Área de trabajo:** `/backend`\n\n## Objetivo\nGenerar y consultar notificaciones relacionadas con eventos relevantes de tandas, participantes, obligaciones y pagos.\n\n## Alcance\n- Registrar notificaciones para invitaciones, aceptación/rechazo, obligaciones, vencimientos y pagos.\n- Consultar notificaciones por usuario.\n- Mantener estado de lectura.\n- Evitar duplicación ante reintentos de eventos.\n- Preparar abstracción para integrar canales de envío cuando se decida.\n\n## Criterios de aceptación\n- [ ] Las notificaciones quedan asociadas al usuario destinatario y al recurso relacionado.\n- [ ] El usuario solo puede consultar sus notificaciones.\n- [ ] Los reintentos de un mismo evento no generan notificaciones duplicadas.\n- [ ] Se puede consultar y actualizar el estado de lectura.\n- [ ] Se conserva historial básico de notificaciones.\n- [ ] El canal de entrega no queda acoplado a la lógica del dominio.\n\n## Dependencias\nBE-01, BE-02 y DB-01 a DB-04.\n\n## Pendiente\nQ-09 define canales, frecuencia, horarios y proveedor. El registro interno y la consulta pueden desarrollarse antes de decidir envíos externos.\n\n## Reglas funcionales confirmadas (actualización 2026-11-08)\n- Enviar notificaciones individuales de cobro y avisos operativos; usar teléfono para Push y notificaciones cuando corresponda.\n- Notificar pausa/reanudación, abandono, reasignación, pagos externos pendientes de confirmación, devoluciones y proceso/resultado de cancelación.\n- Confirmaciones/rechazos de pagos externos y devoluciones deben notificarse a las partes involucradas.\n- Mantener idempotencia para evitar notificaciones duplicadas ante reintentos o eventos repetidos.\n",
+        "comments":  {
+                         "author":  "1260811",
+                         "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                         "created_at":  "2026-11-08T07:40:28Z"
+                     }
+    },
+    {
+        "number":  20,
+        "title":  "[BE-10] Conciliación y confirmación de pagos con Pey",
+        "state":  "open",
+        "assignees":  {
+
+                      },
+        "labels":  {
+
+                   },
+        "body":  "## Identificación\n- **Backlog:** BE-10\n- **Prioridad:** P0\n- **Área de trabajo:** `/backend`\n\n## Objetivo\nConfirmar pagos mediante consulta a Pey y conciliar la transacción con la obligación correspondiente antes de actualizar el estado financiero del sistema.\n\n## Alcance\n- Consultar transacciones en Pey por los identificadores disponibles.\n- Validar importe, cuenta receptora, referencia y asociación con la solicitud/obligación.\n- Distinguir obligación, intento de pago, pago confirmado y transacción del proveedor.\n- Actualizar el estado de la obligación de forma transaccional.\n- Detectar duplicados, importes incorrectos, pagos tardíos y transacciones no asociadas.\n- Proporcionar mecanismo de conciliación de operaciones pendientes.\n\n## Criterios de aceptación\n- [ ] Un webhook funciona como señal para iniciar/solicitar conciliación, no como confirmación definitiva por sí solo.\n- [ ] El pago solo se confirma tras consultar y validar la transacción con Pey.\n- [ ] Se valida que el importe corresponda exactamente a la obligación, dado que no se permiten pagos parciales.\n- [ ] Los importes incorrectos o duplicados quedan en estado de discrepancia/revisión y no liquidan indebidamente la obligación.\n- [ ] La actualización de pago y obligación es atómica.\n- [ ] Los reintentos de conciliación no duplican pagos ni movimientos.\n- [ ] Existe una forma controlada de revisar y reprocesar operaciones pendientes.\n\n## Dependencias\nBE-08, BE-09 y DB-01 a DB-04.\n\n## Pendiente\nQ-08 define el tratamiento de pagos confirmados después del vencimiento o expiración del QR.\n\n## Reglas funcionales confirmadas (actualización 2026-11-08)\n- La plataforma no recibe ni almacena fondos: solicita cobros a Pey y concilia transacciones.\n- Los cobros CoDi son individuales por pagador; consolidar varias participaciones del mismo usuario solo para el mismo periodo y la misma cuenta destino. Excluir los turnos cuyo receptor sea el propio pagador.\n- No se permiten pagos parciales por CoDi. Los importes incorrectos/duplicados/no asociados quedan en discrepancia.\n- El organizador puede registrar pagos externos parciales; cada registro requiere confirmación de la persona receptora. Solo la suma de pagos confirmados aplicables liquida la obligación.\n- Para abandono, usar el importe efectivamente recibido por el turno: puede abandonar unilateralmente si recibió como máximo 50 % del total que le corresponde.\n- En cancelación, bloquear nuevos cobros, resolver solicitudes/transacciones pendientes y generar cálculo de liquidación.\n- Las devoluciones externas se registran y requieren confirmación de quien recibe; mantener el saldo pendiente si se rechazan.\n",
+        "comments":  [
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:39:46Z"
+                         },
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:40:24Z"
+                         }
+                     ]
+    },
+    {
+        "number":  19,
+        "title":  "[BE-09] Recepción, validación e idempotencia de webhooks Pey",
+        "state":  "open",
+        "assignees":  {
+
+                      },
+        "labels":  {
+
+                   },
+        "body":  "## Identificación\n- **Backlog:** BE-09\n- **Prioridad:** P0\n- **Área de trabajo:** `/backend`\n\n## Objetivo\nRecibir eventos de Pey de forma segura, validar su autenticidad y procesarlos sin duplicar efectos financieros.\n\n## Alcance\n- Exponer endpoint de webhook por ambiente/API key.\n- Validar firma Standard Webhooks sobre el cuerpo original sin modificar.\n- Validar timestamp y encabezados requeridos.\n- Procesar `codi.qr.payment_received`, `codi.pn.payment_received` y `bank.account.updated`.\n- Persistir identificadores de entrega y transacción con unicidad independiente.\n- Implementar deduplicación concurrente y procesamiento seguro.\n- Registrar el evento para auditoría y reprocesamiento controlado.\n\n## Criterios de aceptación\n- [ ] La firma se valida con el SDK Java de Standard Webhooks y el secreto se obtiene de configuración segura.\n- [ ] Una firma inválida no produce cambios de negocio.\n- [ ] El cuerpo original se utiliza para validar la firma.\n- [ ] `webhook-id` evita procesar dos veces la misma entrega.\n- [ ] `transactionId` evita contabilizar dos veces la misma transacción aunque llegue en entregas diferentes.\n- [ ] El procesamiento es seguro ante concurrencia y reintentos.\n- [ ] Se enrutan eventos según su campo `type`.\n- [ ] Se define respuesta HTTP según resultado de validación y procesamiento, pendiente de confirmar la política de reintentos de Pey.\n\n## Dependencias\nBE-01, BE-08 y DB-01 a DB-04.\n\n## Pendiente\nConfirmar con Pey la política de reintentos, timeout y respuesta esperada (Q-11). El evento `payment_link.status_updated` solo se incorpora si se decide utilizar Payment Links.\n\n## Reglas funcionales confirmadas (actualización 2026-11-08)\n- Los webhooks de Pey son avisos para iniciar conciliación, no prueba definitiva del pago. Consultar/validar la transacción con Pey.\n- Mantener idempotencia independiente por webhook-id y transactionId.\n- Pey gestiona el cobro CoDi; la plataforma no custodia fondos.\n- Durante una cancelación, resolver las solicitudes y transacciones pendientes antes de completar el proceso; no asumir que la expiración del QR prueba que no hubo pago.\n- Los pagos externos y las devoluciones externas no provienen de webhooks Pey; requieren flujo propio de registro, confirmación/rechazo y auditoría.\n",
+        "comments":  [
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:39:45Z"
+                         },
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:40:22Z"
+                         }
+                     ]
+    },
+    {
+        "number":  18,
+        "title":  "[BE-08] Adaptador de integración con Pey para operaciones CoDi",
+        "state":  "open",
+        "assignees":  {
+
+                      },
+        "labels":  {
+
+                   },
+        "body":  "## Identificación\n- **Backlog:** BE-08\n- **Prioridad:** P0\n- **Área de trabajo:** `/backend`\n\n## Objetivo\nImplementar una capa de integración con Pey aislada del dominio de tandas y pagos.\n\n## Alcance\n- Crear un adaptador/cliente HTTP para Pey.\n- Configurar API keys por ambiente mediante variables/secretos externos.\n- Integrar generación de QR CoDi (`POST /codi/qr`).\n- Evaluar e integrar Push CoDi (`POST /codi/pn`) cuando se defina el flujo.\n- Consultar transacciones en Pey.\n- Manejar timeouts, errores, respuestas inválidas y trazabilidad.\n- Mantener modelos y DTOs de Pey separados de las entidades del dominio.\n- Asociar cada solicitud de pago con la obligación correspondiente.\n\n## Criterios de aceptación\n- [ ] Las credenciales no se almacenan en el repositorio ni se exponen al frontend.\n- [ ] El dominio no depende directamente de los DTOs de Pey.\n- [ ] Se puede generar un QR para una obligación con los datos autorizados.\n- [ ] Se conserva la respuesta e identificadores necesarios para conciliación.\n- [ ] Los errores de proveedor se traducen a errores internos controlados.\n- [ ] Se puede consultar la transacción antes de considerar confirmado un pago.\n- [ ] Existen pruebas unitarias del adaptador con respuestas simuladas.\n\n## Dependencias\nBE-01 y DB-01 a DB-04. Puede iniciarse el cliente y la configuración con el OpenAPI disponible.\n\n## Pendiente\nQ-12 define si el MVP utilizará QR, Push o ambos. Q-08 define cómo tratar pagos confirmados después del vencimiento/expiración del QR.\n\n## Reglas funcionales confirmadas (actualización 2026-11-08)\n- Integrar QR y Push CoDi. Pey gestiona los cobros; la plataforma solicita la generación y presenta/envía la información al pagador, sin recibir, custodiar ni transferir fondos.\n- Cada solicitud es individual por usuario pagador. Consolidar varias participaciones de un mismo usuario solo si son del mismo periodo y comparten cuenta destino.\n- La cuenta destino es la cuenta bancaria seleccionada por la persona receptora del turno. No generar cobros a la persona por sus propios turnos.\n- Push requiere teléfono; el teléfono también se usa para notificaciones cuando aplique.\n- Permitir regenerar una solicitud para una obligación pendiente sin crear una obligación duplicada; mantener historial de intentos y solicitudes.\n",
+        "comments":  [
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:39:43Z"
+                         },
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:40:20Z"
+                         }
+                     ]
+    },
+    {
+        "number":  17,
+        "title":  "[BE-07] Generación de turnos y obligaciones de aportación",
+        "state":  "open",
+        "assignees":  {
+
+                      },
+        "labels":  {
+
+                   },
+        "body":  "## Identificación\n- **Backlog:** BE-07\n- **Prioridad:** P0\n- **Área de trabajo:** `/backend`\n\n## Objetivo\nGenerar los turnos de una tanda y las obligaciones de aportación asociadas, conservando quién recibe y qué participantes deben aportar.\n\n## Alcance\n- Generar turnos para una tanda activada.\n- Asignar exactamente una persona receptora por turno.\n- Asociar el turno con la cuenta que esa persona seleccionó para la tanda.\n- Generar obligaciones individuales de aportación.\n- Registrar montos, fechas y estados de obligación cuando las reglas estén definidas.\n- Exponer consultas para participante y organizador según sus permisos.\n\n## Criterios de aceptación\n- [ ] Cada turno tiene exactamente una persona receptora.\n- [ ] La cuenta receptora corresponde a la selección de esa persona para esa tanda.\n- [ ] Se conserva una referencia/snapshot histórico de la cuenta utilizada en el turno.\n- [ ] Las obligaciones identifican al participante obligado, turno, importe y vencimiento.\n- [ ] No se generan obligaciones duplicadas al reintentar la activación/generación.\n- [ ] El participante solo consulta sus obligaciones; el organizador consulta las de su tanda.\n- [ ] No se inventa el orden de turnos ni el calendario mientras estén pendientes de definición.\n\n## Dependencias\nBE-04, BE-05, BE-06 y DB-01 a DB-04.\n\n## Bloqueado parcialmente\nQ-05 (orden de turnos), definición de calendario y vencimientos, y decisión sobre cambios del organizador antes de activar. La estructura y contratos pueden prepararse; la generación definitiva depende de estas reglas.\n\n## Reglas funcionales confirmadas (actualización 2026-11-08)\n- Las obligaciones se consolidan por usuario y periodo, con desglose por participación; se separan por cuenta destino cuando los receptores sean distintos.\n- No cobrar a la persona por los turnos cuyo receptor sea ella misma. Ejemplo: si tiene los turnos 4 y 5 de una tanda de 10, no paga por esos dos turnos; los otros participantes sí aportan para esos turnos.\n- Cada participante obligado recibe una solicitud individual; consolidar sus participaciones solo cuando compartan periodo y destino. No consolidar pagos de personas distintas.\n- Cuenta destino: cuenta bancaria seleccionada por la persona receptora para esa tanda.\n- No permitir pagos parciales por CoDi. Los pagos externos sí pueden registrarse parcialmente, con confirmación de la persona receptora; la obligación se liquida al cubrirse el total.\n- Al reasignar, obligaciones futuras pasan a la nueva persona y obligaciones vencidas/anteriores permanecen con la persona original.\n- Pausa: detener nuevas obligaciones. Reanudación: nuevas fechas para turnos pendientes, conservando fechas originales.\n- Cancelación: bloquear nuevas obligaciones/cobros, resolver solicitudes/transacciones pendientes y calcular liquidación.\n",
+        "comments":  [
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:39:42Z"
+                         },
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:40:18Z"
+                         }
+                     ]
+    },
+    {
+        "number":  16,
+        "title":  "[BE-06] Convenios, sanciones y aceptación por participantes",
+        "state":  "open",
+        "assignees":  {
+
+                      },
+        "labels":  {
+
+                   },
+        "body":  "## Identificación\n- **Backlog:** BE-06\n- **Prioridad:** P0\n- **Área de trabajo:** `/backend`\n\n## Objetivo\nGestionar el convenio de una tanda, la configuración opcional de sanciones y la aceptación explícita de todos los participantes.\n\n## Alcance\n- Registrar el convenio inicial de la tanda.\n- Permitir configurar sanción como monto fijo, porcentaje o ausencia explícita de sanción.\n- Versionar cambios del convenio.\n- Registrar quién aceptó qué versión y cuándo.\n- Consultar el estado de aceptación por participante.\n- Bloquear la activación hasta contar con todas las aceptaciones requeridas.\n\n## Criterios de aceptación\n- [ ] Toda tanda tiene un convenio definido, incluso si no establece sanciones.\n- [ ] Cada participante debe aceptar explícitamente la versión vigente.\n- [ ] La aceptación identifica al usuario, tanda, versión y fecha.\n- [ ] Una modificación del convenio genera una nueva versión sin borrar el historial anterior.\n- [ ] La activación se bloquea mientras falte alguna aceptación de la versión vigente.\n- [ ] No se calculan sanciones automáticamente con reglas incompletas.\n\n## Dependencias\nBE-04, DB-01 a DB-04.\n\n## Bloqueado para cálculo de sanciones\nQ-01 (base del porcentaje), Q-02 (condición de aplicación), Q-03 (periodo de gracia) y límites aplicables. El versionado y registro de aceptaciones sí pueden diseñarse antes de resolver esas preguntas.",
+        "comments":  [
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:39:39Z"
+                         },
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:40:17Z"
+                         }
+                     ]
+    },
+    {
+        "number":  15,
+        "title":  "[BE-05] Selección de cuenta bancaria por participación en tanda",
+        "state":  "open",
+        "assignees":  {
+
+                      },
+        "labels":  {
+
+                   },
+        "body":  "## Identificación\n- **Backlog:** BE-05\n- **Prioridad:** P0\n- **Área de trabajo:** `/backend`\n\n## Objetivo\nPermitir que cada participante seleccione explícitamente la cuenta bancaria que utilizará en cada tanda.\n\n## Alcance\n- Consultar las cuentas asociadas y elegibles del participante.\n- Registrar la selección para una participación específica.\n- Validar que el usuario tenga asociación autorizada con la cuenta.\n- Validar que la cuenta esté ACTIVE cuando la selección sea requisito para activar la tanda.\n- Conservar el historial necesario de selecciones.\n- Proporcionar al módulo de turnos la cuenta seleccionada para la persona receptora.\n\n## Criterios de aceptación\n- [ ] La selección es independiente para cada tanda.\n- [ ] No se selecciona una cuenta automáticamente sin confirmación explícita.\n- [ ] Solo se puede seleccionar una cuenta asociada al usuario y elegible.\n- [ ] La activación no se permite si falta la selección requerida o la cuenta no está ACTIVE.\n- [ ] Se conserva la cuenta utilizada históricamente para cada turno aunque la selección cambie después, conforme a la política que se defina.\n- [ ] Se valida que la selección pertenezca a la participación y tanda correctas.\n\n## Dependencias\nBE-02, BE-03, BE-04 y DB-01 a DB-04.\n\n## Pendiente\nLa política para cambiar una cuenta después de activar la tanda está pendiente (Q-04). No implementar cambios retroactivos que alteren turnos ya generados.",
+        "comments":  [
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:39:38Z"
+                         },
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:40:15Z"
+                         }
+                     ]
+    },
+    {
+        "number":  14,
+        "title":  "[BE-04] Creación y administración de tandas y participantes",
+        "state":  "open",
+        "assignees":  {
+
+                      },
+        "labels":  {
+
+                   },
+        "body":  "## Identificación\n- **Backlog:** BE-04\n- **Prioridad:** P0\n- **Área de trabajo:** `/backend`\n\n## Objetivo\nImplementar el ciclo de vida de una tanda en borrador, la gestión de participantes y las validaciones para activarla.\n\n## Alcance\n- Crear, consultar y editar tandas en borrador.\n- Invitar usuarios y registrar aceptación o rechazo.\n- Consultar participantes y sus estados.\n- Distinguir organizador de participante.\n- Permitir que el organizador participe o no; su participación debe ser explícita.\n- Validar los requisitos de activación.\n\n## Criterios de aceptación\n- [ ] El organizador puede crear y consultar sus tandas.\n- [ ] El organizador puede participar como participante, pero no se incorpora automáticamente.\n- [ ] Una persona puede organizar una tanda y participar en otra.\n- [ ] Se gestionan invitaciones y estados de participación.\n- [ ] Una tanda no se activa con menos de tres participantes activos.\n- [ ] La activación exige que cada participante tenga cuenta seleccionada y que todos hayan aceptado el convenio.\n- [ ] Las reglas de acceso impiden que usuarios no autorizados administren la tanda.\n\n## Dependencias\nBE-01, BE-02, DB-01 a DB-04. Las reglas de edición, abandono y cancelación se deben integrar después de resolver Q-06 y Q-07.\n\n## Reglas funcionales confirmadas (actualización 2026-11-08)\n- Admitir invitaciones del organizador y solicitudes de ingreso de usuarios. La invitación requiere aceptación; la solicitud requiere aprobación. Conservar rechazos y no admitir nuevos ingresos una vez activa la tanda.\n- Una persona puede tener varias participaciones en la misma tanda; no imponer unicidad por usuario+tanda.\n- El organizador puede pausar/reanudar unilateralmente y debe notificar a todos. Al reanudar establece nuevas fechas para turnos pendientes y se conservan fechas originales.\n- La cancelación activa requiere unanimidad. Bloquear nuevas obligaciones/cobros al iniciarla, resolver solicitudes/transacciones en curso y después calcular la liquidación.\n- Abandono unilateral permitido si la persona ha recibido como máximo el 50 % del importe total que le corresponde recibir; por encima de 50 % no puede abandonar unilateralmente.\n- Reasignación iniciada por organizador, con aceptación de la persona propuesta y aprobación del organizador. Las obligaciones futuras pasan a la nueva persona; las vencidas/anteriores permanecen con la original.\n",
+        "comments":  [
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:39:36Z"
+                         },
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:40:14Z"
+                         }
+                     ]
+    },
+    {
+        "number":  13,
+        "title":  "[BE-03] Registro y administración de cuentas bancarias con Pey",
+        "state":  "open",
+        "assignees":  {
+
+                      },
+        "labels":  {
+
+                   },
+        "body":  "## Identificación\n- **Backlog:** BE-03\n- **Prioridad:** P0\n- **Área de trabajo:** `/backend`\n\n## Objetivo\nImplementar el registro de cuentas bancarias en Pey y la administración de sus asociaciones con usuarios.\n\n## Alcance\n- Integrar `POST /bank-account` y `GET /bank-account/{id}` de Pey.\n- Persistir el identificador `bankAccountId` y el estado de activación.\n- Manejar estados PENDING, PROCESSING, ACTIVE y ERROR.\n- Procesar el evento `bank.account.updated` como aviso de cambio.\n- Consultar a Pey para recuperar el estado y datos vigentes cuando corresponda.\n- Asociar una cuenta con usuarios registrados.\n- Validar el máximo de cinco usuarios asociados por cuenta.\n- Registrar declaración de titularidad y datos necesarios para verificarla.\n\n## Criterios de aceptación\n- [ ] Una cuenta se registra una sola vez en Pey y no se duplica por usuario o tanda.\n- [ ] Se conserva el `bankAccountId` devuelto por Pey.\n- [ ] Una cuenta recién registrada queda PENDING hasta recibir/consultar su estado real.\n- [ ] Solo una cuenta ACTIVE puede seleccionarse para recibir pagos CoDi.\n- [ ] Se impide superar cinco usuarios asociados, incluso ante solicitudes concurrentes.\n- [ ] La asociación con la cuenta requiere autorización y declaración correspondiente.\n- [ ] Los errores de Pey se manejan sin marcar la cuenta como ACTIVE indebidamente.\n\n## Dependencias\nBE-01, DB-01 a DB-04 y BE-08 (adaptador/conectividad Pey, que puede construirse en paralelo).\n\n## Nota funcional\nQue una cuenta esté ACTIVE en Pey no concede por sí solo permiso a cualquier usuario para utilizarla.",
+        "comments":  [
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:39:35Z"
+                         },
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:40:13Z"
+                         }
+                     ]
+    },
+    {
+        "number":  12,
+        "title":  "[BE-02] Autenticación, sesión y autorización de usuarios",
+        "state":  "open",
+        "assignees":  {
+
+                      },
+        "labels":  {
+
+                   },
+        "body":  "## Identificación\n- **Backlog:** BE-02\n- **Prioridad:** P0\n- **Área de trabajo:** `/backend`\n\n## Objetivo\nImplementar los mecanismos de autenticación y autorización necesarios para proteger los recursos del sistema.\n\n## Alcance\n- Registro e inicio de sesión.\n- Recuperación de acceso, conforme al mecanismo que se defina.\n- Gestión de sesión o tokens.\n- Identificación del usuario autenticado.\n- Protección de endpoints.\n- Autorización basada en permisos globales y pertenencia/función contextual en cada tanda.\n- Auditoría de operaciones administrativas sensibles.\n\n## Criterios de aceptación\n- [ ] Los endpoints protegidos requieren autenticación válida.\n- [ ] La identidad del usuario se obtiene del contexto autenticado y no de un identificador arbitrario enviado por el cliente.\n- [ ] Se validan permisos antes de exponer datos o ejecutar operaciones.\n- [ ] Se distingue el rol global de plataforma de la función contextual de organizador o participante en una tanda.\n- [ ] Se impide consultar información de tandas ajenas sin autorización.\n- [ ] Se documentan los endpoints y errores de autenticación/autorización.\n\n## Dependencias\nBE-01 y decisión Q-13 (mecanismo de autenticación). Puede avanzarse con estructura y contratos preliminares; no cerrar el mecanismo hasta resolver Q-13.\n\n## Pendiente\nDefinir el alcance exacto de administración de plataforma y acceso administrativo a movimientos (Q-10).",
+        "comments":  [
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:39:33Z"
+                         },
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:40:11Z"
+                         }
+                     ]
+    },
+    {
+        "number":  11,
+        "title":  "[BE-01] Estructura inicial del backend con Spring Boot",
+        "state":  "open",
+        "assignees":  {
+
+                      },
+        "labels":  {
+
+                   },
+        "body":  "## Identificación\n- **Backlog:** BE-01\n- **Prioridad:** P0\n- **Área de trabajo:** `/backend`\n\n## Objetivo\nCrear la estructura base del backend Java con Spring Boot como monolito modular, preparada para incorporar los módulos funcionales del MVP.\n\n## Alcance\n- Inicializar el proyecto Spring Boot dentro de `/backend`.\n- Configurar Java y herramienta de construcción del proyecto.\n- Definir una organización modular para identity, users, bankaccounts, tandas, participants, turns, agreements, contributions, payments, pey, webhooks, notifications y audit.\n- Configurar perfiles de ejecución local y por ambiente.\n- Incorporar configuración centralizada, manejo global de errores y validación.\n- Preparar pruebas unitarias y de integración.\n- Documentar cómo ejecutar y probar el backend localmente.\n\n## Criterios de aceptación\n- [ ] El proyecto compila y arranca localmente.\n- [ ] La estructura permite separar responsabilidades por módulo.\n- [ ] La configuración sensible se obtiene del ambiente y no se versiona.\n- [ ] Existe manejo uniforme de errores HTTP.\n- [ ] Existe una prueba automatizada mínima de arranque.\n- [ ] Las instrucciones de ejecución están documentadas.\n\n## Dependencias\nNinguna para iniciar. La versión de Java debe alinearse con la configuración definitiva del proyecto.\n\n## Nota\nMantener el alcance dentro de `/backend`. No implementar microservicios; el enfoque acordado es un monolito modular.",
+        "comments":  [
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:39:32Z"
+                         },
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:40:09Z"
+                         }
+                     ]
+    },
+    {
+        "number":  10,
+        "title":  "[FE-10] Centro de notificaciones",
+        "state":  "open",
+        "assignees":  "YudexiOrozco",
+        "labels":  {
+
+                   },
+        "body":  "## Identificación\n- **Backlog:** FE-10\n- **Prioridad:** P1\n- **Área de trabajo:** `/frontend`\n\n## Objetivo\nPresentar las notificaciones relacionadas con invitaciones, cambios de la tanda, obligaciones y pagos.\n\n## Alcance\n- Listado o panel de notificaciones.\n- Indicador de notificaciones no leídas.\n- Navegación desde una notificación al contexto relacionado.\n- Estados de carga, vacío y error.\n- Marcado como leída, si el contrato de API lo contempla.\n\n## Criterios de aceptación\n- [ ] Se muestran las notificaciones disponibles para el usuario autenticado.\n- [ ] Se distingue cuáles están leídas y cuáles no.\n- [ ] Una notificación puede llevar al detalle de la tanda, invitación, obligación o pago relacionado.\n- [ ] Se contemplan estados vacíos y errores.\n- [ ] La interfaz no duplica notificaciones por su cuenta.\n- [ ] La presentación no presupone un canal de envío externo (correo, SMS o push).\n\n## Dependencias\nFE-01. Puede desarrollarse con datos mock. La integración real depende de BE-11 y de la definición de canales de notificación (Q-09).\n\n## Reglas funcionales confirmadas (actualización 2026-11-08)\n- Enviar notificaciones individuales de cobro y avisos operativos; utilizar el teléfono del usuario cuando el canal (por ejemplo Push CoDi) lo requiera.\n- Notificar a todos los participantes cuando el organizador pausa o reanuda una tanda.\n- Notificar solicitudes de confirmación/rechazo de pagos externos y devoluciones, abandono, reasignaciones y decisiones de cancelación.\n- Notificar el resultado de confirmaciones/rechazos a las partes involucradas.\n- La plataforma solo envía avisos y presenta seguimiento; Pey gestiona el cobro. Evitar notificaciones duplicadas por reintentos/eventos repetidos.\n",
+        "comments":  [
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:39:30Z"
+                         },
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:40:05Z"
+                         }
+                     ]
+    },
+    {
+        "number":  9,
+        "title":  "[FE-09] Historial de pagos y movimientos",
+        "state":  "open",
+        "assignees":  "YudexiOrozco",
+        "labels":  {
+
+                   },
+        "body":  "## Identificación\n- **Backlog:** FE-09\n- **Prioridad:** P0\n- **Área de trabajo:** `/frontend`\n\n## Objetivo\nOfrecer un historial claro de pagos y movimientos, aplicando las reglas de visibilidad según el rol contextual del usuario en cada tanda.\n\n## Alcance\n- Historial de movimientos por tanda.\n- Vista de movimientos propios para participantes.\n- Vista completa para el organizador de sus tandas.\n- Filtros básicos por tanda, fecha y estado, cuando la API los soporte.\n- Detalle de un movimiento y su estado.\n- Estados vacíos, carga y error.\n\n## Criterios de aceptación\n- [ ] El participante solo visualiza sus propias obligaciones, pagos y cantidades que le deben.\n- [ ] El organizador visualiza todos los movimientos de las tandas que organiza.\n- [ ] La interfaz no presupone que organizar implica participar.\n- [ ] Los filtros no permiten acceder a información fuera del alcance autorizado.\n- [ ] Se distingue entre obligación, intento de pago y pago confirmado según los datos del backend.\n- [ ] No se presentan transacciones de Pey como pagos confirmados sin validación del backend.\n\n## Dependencias\nFE-07 y FE-08. Puede iniciar con datos mock; requiere el contrato de movimientos para integración.\n\n## Reglas funcionales confirmadas (actualización 2026-11-08)\n- Distinguir pagos confirmados por Pey de pagos externos registrados por el organizador.\n- El organizador puede registrar pagos externos parciales. Cada registro requiere confirmación de la persona receptora antes de aplicarse al saldo; la obligación solo queda liquidada cuando la suma de pagos externos confirmados y/o pagos CoDi conciliados cubre el importe total.\n- Conservar quién registró el pago externo, quién lo confirmó/rechazó, importe, fecha, medio, referencia y comprobante opcional.\n- La liquidación por cancelación calcula saldos por persona, sin ejecutar transferencias desde la plataforma.\n- Las devoluciones se registran como movimientos externos y requieren confirmación de la persona destinataria; rechazo genera discrepancia y el saldo permanece pendiente.\n",
+        "comments":  [
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:39:29Z"
+                         },
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:40:03Z"
+                         }
+                     ]
+    },
+    {
+        "number":  8,
+        "title":  "[FE-08] Interfaz de pago de obligaciones mediante CoDi",
+        "state":  "open",
+        "assignees":  "YudexiOrozco",
+        "labels":  {
+
+                   },
+        "body":  "## Identificación\n- **Backlog:** FE-08\n- **Prioridad:** P0\n- **Área de trabajo:** `/frontend`\n\n## Objetivo\nPermitir que un participante consulte una obligación y utilice el QR CoDi generado por el backend para realizar el pago.\n\n## Alcance\n- Detalle de obligación pendiente.\n- Presentación del importe y concepto de pago.\n- Visualización del QR y de la información de expiración recibidos del backend.\n- Consulta/actualización del estado del pago.\n- Presentación de estados pendiente, en proceso, confirmado y error, conforme al contrato de API.\n- Mensajes para pagos no confirmados o con discrepancias.\n\n## Criterios de aceptación\n- [ ] El participante puede abrir el detalle de una obligación pendiente.\n- [ ] Se muestra el importe exacto de la obligación.\n- [ ] El QR se presenta tal como lo entrega el backend; el frontend no lo genera ni modifica.\n- [ ] No se permite iniciar un pago parcial.\n- [ ] La interfaz no muestra un pago como confirmado únicamente porque se generó el QR o se recibió una notificación.\n- [ ] El estado confirmado proviene del backend después de su validación con Pey.\n- [ ] Se informa cuando el QR expiró o el pago requiere revisión.\n- [ ] Se evita presentar como pagada una obligación mientras el backend no la marque como cubierta.\n\n## Dependencias\nFE-07. Puede iniciar con un QR y estados mock. La integración real depende de BE-08, BE-09 y BE-10 y de la definición del flujo QR/Push (Q-12).\n\n## Reglas funcionales confirmadas (actualización 2026-11-08)\n- Pey gestiona los cobros CoDi. La plataforma no recibe, custodia, almacena ni distribuye fondos: coordina solicitudes QR/Push, notifica y mantiene seguimiento/conciliación.\n- Cada pagador recibe una solicitud individual. Se consolidan las aportaciones de varias participaciones del mismo usuario en una sola solicitud solo cuando corresponden al mismo periodo y a la misma cuenta destino.\n- La cuenta destino del QR/Push es la cuenta bancaria seleccionada por la persona receptora del turno. No se genera cobro a la persona por sus propios turnos.\n- Los importes CoDi son exactos y no admiten pagos parciales. La confirmación requiere conciliación con Pey; la generación del QR o el webhook por sí solos no confirman el pago.\n- El teléfono del pagador se utiliza para Push y notificaciones cuando corresponda.\n- El organizador puede solicitar una nueva solicitud QR/Push para una obligación pendiente, sin duplicar la obligación.\n",
+        "comments":  [
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:39:27Z"
+                         },
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:40:02Z"
+                         }
+                     ]
+    },
+    {
+        "number":  7,
+        "title":  "[FE-07] Consulta de turnos y obligaciones de la tanda",
+        "state":  "open",
+        "assignees":  "YudexiOrozco",
+        "labels":  {
+
+                   },
+        "body":  "## Identificación\n- **Backlog:** FE-07\n- **Prioridad:** P0\n- **Área de trabajo:** `/frontend`\n\n## Objetivo\nPresentar el calendario de turnos y las obligaciones de aportación de cada participante, respetando los permisos de consulta.\n\n## Alcance\n- Vista de turnos de una tanda.\n- Identificación de la persona receptora de cada turno.\n- Presentación de la fecha y monto correspondiente cuando estén definidos.\n- Vista de obligaciones propias del participante.\n- Vista de cantidades que le deben al participante.\n- Estados de obligaciones y pagos.\n\n## Criterios de aceptación\n- [ ] El participante consulta únicamente sus propias obligaciones y pagos.\n- [ ] El participante puede consultar las cantidades que le deben.\n- [ ] El organizador puede consultar los movimientos de todas las personas de sus tandas.\n- [ ] Cada turno muestra una sola persona receptora.\n- [ ] Se muestra la cuenta receptora correspondiente cuando el backend la proporcione.\n- [ ] Los estados se presentan de forma diferenciada y comprensible.\n- [ ] La interfaz no inventa fechas, orden de turnos ni vencimientos; utiliza los datos entregados por la API.\n\n## Dependencias\nFE-04 y FE-05. El diseño puede comenzar con datos mock. El orden de turnos, calendario y reglas de vencimiento siguen pendientes de definición.\n\n## Reglas funcionales confirmadas (actualización 2026-11-08)\n- Las obligaciones se consolidan por usuario y periodo; se separan en solicitudes distintas cuando cambie la cuenta/persona receptora (destino).\n- Se excluyen del cobro las aportaciones correspondientes a los turnos cuyo receptor sea el mismo usuario obligado. Ejemplo: si una persona tiene los turnos 4 y 5 de una tanda de 10, no se le cobra por esos turnos; los demás participantes sí aportan a esos turnos.\n- Una solicitud conjunta puede cubrir varias participaciones del mismo usuario únicamente si comparten periodo y cuenta destino. Conservar el desglose interno por participación.\n- Cada pagador recibe su propia solicitud; no se hacen cobros compartidos entre personas.\n- La cuenta destino corresponde a la cuenta bancaria seleccionada por la persona receptora para esa tanda/participación.\n- Al reasignar un turno, las obligaciones futuras pasan a la nueva persona; las vencidas o de periodos anteriores permanecen con la persona original.\n- La pausa detiene la generación de nuevas obligaciones. Al reanudar, el organizador define nuevas fechas para turnos pendientes y se conservan las fechas originales.\n- La cancelación bloquea nuevas obligaciones y cobros, espera la resolución de solicitudes/transacciones pendientes y requiere cálculo de liquidación.\n",
+        "comments":  [
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:39:26Z"
+                         },
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:40:00Z"
+                         }
+                     ]
+    },
+    {
+        "number":  6,
+        "title":  "[FE-06] Visualización y aceptación del convenio de la tanda",
+        "state":  "open",
+        "assignees":  "YudexiOrozco",
+        "labels":  {
+
+                   },
+        "body":  "## Identificación\n- **Backlog:** FE-06\n- **Prioridad:** P0\n- **Área de trabajo:** `/frontend`\n\n## Objetivo\nMostrar a todos los participantes las condiciones acordadas para una tanda y permitir registrar su aceptación explícita.\n\n## Alcance\n- Mostrar el convenio de la tanda.\n- Mostrar si se pactó una sanción o explícitamente que no habrá sanción.\n- Presentar el tipo de sanción configurado: monto fijo o porcentaje, cuando aplique.\n- Permitir aceptar el convenio.\n- Mostrar el estado de aceptación de cada participante al organizador.\n- Identificar la versión del convenio que se está aceptando.\n\n## Criterios de aceptación\n- [ ] Cada participante puede consultar el convenio completo antes de aceptarlo.\n- [ ] La aceptación es una acción explícita.\n- [ ] Se contempla la opción de no establecer sanciones.\n- [ ] Se muestra el estado de aceptación por participante.\n- [ ] Se identifica la versión del convenio aceptada.\n- [ ] Se informa que la tanda no puede activarse hasta que todos los participantes hayan aceptado.\n- [ ] No se calculan ni muestran sanciones automáticas mientras las reglas pendientes no estén definidas.\n\n## Dependencias\nFE-04. Puede iniciar con contenido de ejemplo. La fórmula, condiciones, periodo de gracia y límites de sanción siguen pendientes de definición funcional.",
+        "comments":  [
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:39:24Z"
+                         },
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:39:58Z"
+                         }
+                     ]
+    },
+    {
+        "number":  5,
+        "title":  "[FE-05] Selección de cuenta bancaria para cada participación",
+        "state":  "open",
+        "assignees":  "YudexiOrozco",
+        "labels":  {
+
+                   },
+        "body":  "## Identificación\n- **Backlog:** FE-05\n- **Prioridad:** P0\n- **Área de trabajo:** `/frontend`\n\n## Objetivo\nPermitir que cada participante seleccione explícitamente cuál de sus cuentas bancarias asociadas utilizará en una tanda específica.\n\n## Alcance\n- Mostrar las cuentas disponibles para el usuario.\n- Permitir seleccionar una cuenta para su participación en una tanda.\n- Mostrar cuál cuenta quedó seleccionada.\n- Informar cuando no existen cuentas disponibles o ninguna está ACTIVE.\n- Permitir revisar la selección antes de activar la tanda.\n\n## Criterios de aceptación\n- [ ] La selección se realiza por tanda, no como preferencia global del usuario.\n- [ ] Se muestran únicamente cuentas que el usuario tiene permitido utilizar.\n- [ ] Se informa que la cuenta debe estar ACTIVE para recibir pagos.\n- [ ] La selección queda asociada a la participación correspondiente.\n- [ ] El usuario puede confirmar qué cuenta seleccionó para esa tanda.\n- [ ] La interfaz no permite asumir una cuenta por defecto sin confirmación explícita.\n\n## Dependencias\nFE-03 y FE-04. Puede desarrollarse con datos mock mientras se define el contrato del backend.\n\n## Nota funcional\nUna persona puede tener varias cuentas y participar en varias tandas con selecciones diferentes. La cuenta que recibirá los pagos de un turno será la seleccionada por la persona receptora para esa tanda.",
+        "comments":  [
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:39:23Z"
+                         },
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:39:57Z"
+                         }
+                     ]
+    },
+    {
+        "number":  4,
+        "title":  "[FE-04] Interfaz de creación y administración de tandas",
+        "state":  "open",
+        "assignees":  "YudexiOrozco",
+        "labels":  {
+
+                   },
+        "body":  "## Identificación\n- **Backlog:** FE-04\n- **Prioridad:** P0\n- **Área de trabajo:** `/frontend`\n\n## Objetivo\nConstruir las pantallas para crear, consultar y administrar tandas, así como gestionar invitaciones y participantes.\n\n## Alcance\n- Listado de tandas del usuario.\n- Formulario de creación y edición de tandas en borrador.\n- Vista de detalle de una tanda.\n- Invitación de participantes y presentación de invitaciones pendientes.\n- Acciones para aceptar o rechazar una invitación.\n- Listado y estado de participantes.\n- Presentación de requisitos pendientes para activar la tanda.\n\n## Criterios de aceptación\n- [ ] El usuario puede consultar sus tandas y su estado.\n- [ ] El organizador puede crear y editar una tanda en borrador.\n- [ ] Se muestran participantes e invitaciones con sus estados.\n- [ ] Se distinguen las acciones disponibles para organizador y participante.\n- [ ] Se informa qué requisitos faltan para activar la tanda.\n- [ ] La interfaz contempla el mínimo de tres participantes activos para activar.\n- [ ] El organizador puede participar en la tanda o limitarse a organizarla; participar debe ser una decisión explícita, no automática.\n\n## Dependencias\nFE-01. Puede iniciar con datos mock. Las reglas definitivas de edición, abandono y cancelación se integrarán cuando se resuelvan las preguntas funcionales correspondientes.\n\n## Reglas funcionales confirmadas (actualización 2026-11-08)\n- La tanda admite invitaciones del organizador y solicitudes de ingreso de usuarios; ambas requieren aceptación/aprobación y no se admiten nuevas incorporaciones una vez activa.\n- El organizador puede pausar y reanudar una tanda activa sin unanimidad; debe notificarse a todos. Al reanudar establece nuevas fechas para los turnos pendientes, conservando las fechas originales en el historial.\n- La cancelación de una tanda activa requiere unanimidad. Durante el proceso se bloquean nuevas obligaciones y solicitudes de cobro; las solicitudes/transacciones ya iniciadas deben resolverse antes de completar la cancelación.\n- Incluir vistas/acciones para abandono y reasignación de turnos, sujetas a las reglas de BE-04 y BE-07.\n- Abandono unilateral permitido solo si la persona recibió como máximo el 50 % del importe total que le corresponde; por encima de ese porcentaje no puede abandonar unilateralmente.\n- La reasignación debe ser iniciada por el organizador, aceptada por la persona propuesta y aprobada por el organizador. Las obligaciones futuras pasan a la nueva persona; las vencidas o de periodos anteriores permanecen con la persona original.\n",
+        "comments":  [
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:39:21Z"
+                         },
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:39:56Z"
+                         }
+                     ]
+    },
+    {
+        "number":  3,
+        "title":  "[FE-03] Interfaz de gestión de cuentas bancarias",
+        "state":  "open",
+        "assignees":  "YudexiOrozco",
+        "labels":  {
+
+                   },
+        "body":  "## Identificación\n- **Backlog:** FE-03\n- **Prioridad:** P0\n- **Área de trabajo:** `/frontend`\n\n## Objetivo\nPermitir que una persona consulte y registre sus cuentas bancarias y conozca el estado de activación de cada cuenta.\n\n## Alcance\n- Listado de cuentas asociadas al usuario.\n- Formulario para registrar una cuenta.\n- Presentación del estado Pey: PENDING, PROCESSING, ACTIVE o ERROR.\n- Presentación de los datos de titularidad disponibles y de las personas asociadas, según permisos.\n- Mensajes informativos sobre el proceso de activación, que puede tardar hasta cinco días hábiles.\n- Manejo de errores y estados vacíos.\n\n## Criterios de aceptación\n- [ ] Se muestra el listado de cuentas del usuario.\n- [ ] Se puede iniciar el registro de una cuenta.\n- [ ] Se distingue visualmente cada estado de activación.\n- [ ] Se informa que solo una cuenta ACTIVE puede recibir pagos CoDi.\n- [ ] Se informa cuando no es posible utilizar una cuenta por su estado.\n- [ ] La interfaz contempla el límite de hasta cinco usuarios asociados a una cuenta, sin sustituir la validación del backend.\n- [ ] No se muestran datos bancarios sensibles innecesarios.\n\n## Dependencias\nFE-01. Puede iniciar con datos mock. La integración real depende del contrato de cuentas bancarias y de Pey.\n\n## Nota funcional\nUna cuenta se registra una sola vez en Pey y puede asociarse con varios usuarios registrados, hasta un máximo de cinco.",
+        "comments":  [
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:39:20Z"
+                         },
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:39:54Z"
+                         }
+                     ]
+    },
+    {
+        "number":  2,
+        "title":  "[FE-02] Interfaz de autenticación y sesión de usuario",
+        "state":  "open",
+        "assignees":  "YudexiOrozco",
+        "labels":  {
+
+                   },
+        "body":  "## Identificación\n- **Backlog:** FE-02\n- **Prioridad:** P0\n- **Área de trabajo:** `/frontend`\n\n## Objetivo\nImplementar las pantallas y estados de interfaz necesarios para registro, inicio de sesión, recuperación de acceso y cierre de sesión.\n\n## Alcance\n- Pantalla de registro.\n- Pantalla de inicio de sesión.\n- Flujo visual de recuperación de acceso.\n- Manejo del estado de sesión en la aplicación.\n- Protección de rutas que requieran autenticación.\n- Estados de carga, validación y error.\n\n## Criterios de aceptación\n- [ ] Se puede navegar entre registro, inicio de sesión y recuperación.\n- [ ] Los formularios validan campos obligatorios y formatos básicos.\n- [ ] Se muestran mensajes comprensibles ante errores y solicitudes en curso.\n- [ ] Las rutas privadas requieren una sesión válida.\n- [ ] Existe una acción para cerrar sesión.\n- [ ] La integración con el backend queda encapsulada en servicios, sin credenciales ni tokens simulados en código productivo.\n\n## Dependencias\nFE-01. Puede desarrollarse inicialmente con un servicio mock mientras se define el contrato de autenticación.\n\n## Fuera de alcance\nDefinir el proveedor o mecanismo definitivo de autenticación; depende de la decisión Q-13.",
+        "comments":  [
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:39:18Z"
+                         },
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:39:53Z"
+                         }
+                     ]
+    },
+    {
+        "number":  1,
+        "title":  "[FE-01] Estructura inicial de la aplicación frontend",
+        "state":  "open",
+        "assignees":  "YudexiOrozco",
+        "labels":  {
+
+                   },
+        "body":  "## Identificación\n- **Backlog:** FE-01\n- **Prioridad:** P0\n- **Área de trabajo:** `/frontend`\n- **Tipo:** Implementación frontend\n\n## Objetivo\nPreparar la aplicación web con React y TypeScript, con una estructura mantenible que permita desarrollar los módulos del MVP.\n\n## Alcance\n- Inicializar la aplicación dentro de `/frontend`.\n- Definir la estructura de carpetas para páginas, componentes, servicios, hooks, tipos y estilos.\n- Configurar navegación/rutas.\n- Preparar configuración de variables de entorno para la URL de la API, sin incluir secretos.\n- Definir una estrategia común para solicitudes HTTP y manejo de errores.\n- Incorporar componentes base reutilizables y un layout general responsivo.\n\n## Criterios de aceptación\n- [ ] La aplicación se ejecuta localmente siguiendo instrucciones documentadas.\n- [ ] Existe una estructura clara para agregar módulos sin mezclar responsabilidades.\n- [ ] La navegación permite incorporar las pantallas del MVP.\n- [ ] La configuración de API se obtiene de variables de entorno.\n- [ ] Existe un layout responsivo y componentes base reutilizables.\n- [ ] Se documentan los comandos de instalación y ejecución.\n\n## Dependencias\nNinguna para iniciar. Las rutas y contratos se podrán ajustar conforme se definan los módulos y la API.\n\n## Nota\nMantener el alcance dentro de `/frontend`; no crear aquí el backend ni las migraciones de base de datos.",
+        "comments":  [
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:39:17Z"
+                         },
+                         {
+                             "author":  "1260811",
+                             "body":  "Contrato compartido: https://github.com/1260811/hackatonSedeco/issues/23\n\nAntes de definir o consumir endpoints, revisar la especificación OpenAPI y los acuerdos registrados en DOC-03. Si durante la implementación se detecta un dato, estado o flujo que falta, documentarlo allí como propuesta/punto pendiente en lugar de asumirlo localmente.",
+                             "created_at":  "2026-11-08T07:39:51Z"
+                         }
+                     ]
+    }
+]
