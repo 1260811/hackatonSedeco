@@ -1,7 +1,10 @@
 # Sistema de gestión de tandas
 
 Plataforma web para organizar y administrar tandas de ahorro entre varias personas, facilitando la coordinación de participantes, turnos, cuentas receptoras y aportaciones. El sistema busca dar visibilidad al calendario y al estado de los compromisos de cada tanda, además de integrar cobros digitales mediante **Pey y CoDi**.
+Link de interfaz
+https://hackaton-sedeco.vercel.app/login
 
+Usuario: cualquier correo Contraseña: Combinación de letras y números de 6 valores
 ## ¿Qué problema resuelve?
 
 La organización de una tanda suele depender de mensajes, acuerdos informales y controles manuales para saber quién participa, cuánto debe aportar, a quién le corresponde recibir y qué pagos ya se realizaron. Esta plataforma centraliza esa información y conserva un historial de los movimientos y acuerdos para que las personas participantes puedan consultar el estado de la tanda con mayor claridad.
